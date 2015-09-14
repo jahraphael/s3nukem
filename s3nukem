@@ -27,6 +27,7 @@ access_key = nil
 secret_key = nil
 thread_count = 10
 max_queue = 10 * 1000
+purge_buckets = false
 STDOUT.sync = true
 
 buckets = []
@@ -45,6 +46,9 @@ begin
           '--secret SECRET',
           String,
           'Amazon Secret Key (required)') {|key| secret_key = key}
+  opts.on('-p', '--purge', 'Purge s3 buckets when completed') do
+    purge_buckets = true
+  end
   opts.on('-t',
           '--threads COUNT',
           Integer,
@@ -150,7 +154,13 @@ buckets.each do |bucket|
     end
   end
 
+  elapsed = Time.now - start_time
+  puts "#{elapsed}: Deleted #{total_deleted} out of #{total_listed}"
+
   # Clean up any stragglers and kill the bucket
-  puts "Bucket #{bucket} deleted!" if mains3.force_delete_bucket(bucket)
+  if purge_buckets
+    puts "Bucket #{bucket} deleted!" if mains3.force_delete_bucket(bucket)
+  end
+
   puts
 end
